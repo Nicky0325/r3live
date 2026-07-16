@@ -95,6 +95,42 @@ catkin_make
 source ~/catkin_ws/devel/setup.bash
 ```
 
+### 4.1 Build and run with VS Code Dev Containers
+
+The repository includes a self-contained development container for Linux amd64 hosts. It provides Ubuntu 20.04, ROS Noetic, the R2LIVE-compatible Livox driver, and all libraries needed to compile and run R3LIVE. Docker Engine, VS Code, the Dev Containers extension, and an X11 or XWayland display are required.
+
+1. Open this repository in VS Code.
+2. Open the Command Palette and select **Dev Containers: Rebuild and Reopen in Container**.
+3. Wait for the image build and automatic `catkin_make` step to finish.
+
+The first build downloads the ROS image and upstream dependencies. Later rebuilds reuse Docker layers. Generated catkin files are kept in `/home/vscode/r3live_ws`, outside the Git checkout, and every new terminal automatically sources ROS, the Livox driver, and R3LIVE.
+
+The container creates `~/r3live_data` on the host and mounts it read-write at `/data`. Put downloaded bag files there, then use two container terminals:
+
+```bash
+# Terminal 1
+roslaunch r3live r3live_bag.launch
+```
+
+```bash
+# Terminal 2
+rosbag play /data/YOUR_DOWNLOADED.bag
+```
+
+R3LIVE's default output path, `${HOME}/r3live_output`, points to `/data/output`. Maps and reconstructed meshes therefore appear in `~/r3live_data/output` on the host and survive container rebuilds. Mesh reconstruction works with the existing command:
+
+```bash
+roslaunch r3live r3live_reconstruct_mesh.launch
+```
+
+RViz and the OpenCV control panel use the host X server through `DISPLAY`, `/tmp/.X11-unix`, and `~/.Xauthority`. If a GUI reports that it cannot open the display, run this once on the host and reopen the container:
+
+```bash
+xhost +SI:localuser:$(id -un)
+```
+
+You can check display forwarding from a container terminal with `glxinfo -B` or `rviz`. This setup intentionally targets local rosbag demos; it does not configure live Livox device access, NVIDIA Container Toolkit support, or macOS/Windows GUI forwarding. Datasets are not downloaded automatically.
+
 ## 5. Run our examples
 ### 5.1 Download our rosbag files ([r3live_dataset](https://github.com/ziv-lin/r3live_dataset)) 
 Our datasets for evaluation can be download from our [Google drive](https://drive.google.com/drive/folders/15i-TRa0EA8BCbNdARVqPMDsU9JOlagVF?usp=sharing) or [Baidu-NetDisk [百度网盘]](https://pan.baidu.com/s/1zmVxkcwOSul8oTBwaHfuFg) (code提取码: wwxw). We have released totally **9** rosbag files for evaluating r3live, with the introduction of these datasets can be found on this [page](https://github.com/ziv-lin/r3live_dataset).
